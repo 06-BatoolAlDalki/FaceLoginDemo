@@ -1,0 +1,40 @@
+﻿<h2>Register</h2>
+<label>User Name :</label>
+<input type="text" id="username" placeholder="Username" />
+<br />
+<br />
+<label>User Password :</label>
+<input type="password" id="password" placeholder="Password" />
+<br />
+<br />
+<video id="video" width="320" height="240" autoplay></video>
+<br />
+<br />
+<button id="capture">Register</button>
+<canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+
+<script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => { video.srcObject = stream; });
+
+    document.getElementById('capture').addEventListener('click', () => {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg');
+
+        fetch('/Account/Register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+                image: dataUrl
+            })
+        })
+            .then(r => r.json())
+            .then(res => alert(res.message));
+    });
+</script>

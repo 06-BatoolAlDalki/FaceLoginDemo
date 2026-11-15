@@ -1,0 +1,61 @@
+﻿@{
+    ViewData["Title"] = "Login by Face";
+}
+
+<h2>Login by Face</h2>
+
+<div class="mb-3">
+    <input type="text" id="username" placeholder="Enter Username" class="form-control" />
+</div>
+
+<video id="video" width="320" height="240" autoplay></video>
+<br />
+
+<button id="capture" class="btn btn-primary mt-2">Login with Face</button>
+
+<canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+
+<script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const captureBtn = document.getElementById('capture');
+    const context = canvas.getContext('2d');
+
+    // 🔹 تشغيل الكاميرا
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => { video.srcObject = stream; })
+        .catch(err => alert("Camera access denied ❌"));
+
+    // 🔹 عند الضغط على زر Login
+    captureBtn.addEventListener('click', () => {
+        const username = document.getElementById('username').value;
+        if (!username) {
+            alert("Please enter username first");
+            return;
+        }
+
+        // التقاط صورة من الفيديو
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg');
+
+        // إرسال الصورة واليوزرنيم للباك إند
+        fetch('/Account/LoginByFace', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: username,
+                image: dataUrl
+            })
+        })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    alert("✅ Login success (Confidence: " + res.confidence + ")");
+                    window.location.href = "/";
+                } else {
+                    alert("❌ Login failed (Confidence: " + res.confidence + ")");
+                }
+            })
+            .catch(err => alert("Error: " + err));
+    });
+</script>
